@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { FlatList, Text, Button } from 'native-base';
 import Card from '../components/molecules/Card';
 import RNBootSplash from 'react-native-bootsplash';
@@ -60,13 +60,11 @@ const Home = ({ route }) => {
   };
 
   if (datas.length > 0) {
-    return (
-      <FlatList
-        data={datas}
-        renderItem={renderItem}
-        keyExtractor={item => item.id}
-      />
-    );
+    return <FlatList
+      data={datas}
+      renderItem={renderItem}
+      keyExtractor={item => item.id}
+    />
   }
   return <Text>No Data</Text>;
 };

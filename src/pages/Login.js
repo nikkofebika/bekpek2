@@ -1,5 +1,4 @@
-import React, { useEffect } from 'react';
-import RNBootSplash from 'react-native-bootsplash';
+import React, { useEffect, useContext, useState } from 'react';
 import Ionicon from 'react-native-ionicons';
 import {
     NativeBaseProvider,
@@ -15,18 +14,14 @@ import {
     IconButton,
     HStack,
 } from 'native-base';
+import { AuthContext } from '../context/auth/AuthContext';
+import { StyleSheet, TextInput } from 'react-native';
 
 export default function Login({ navigation }) {
-    useEffect(() => {
-        const init = async () => {
+    const { authContext } = useContext(AuthContext);
+    const [username, setUsername] = useState("");
+    const [password, setPassword] = useState("");
 
-        };
-
-        init().finally(async () => {
-            await RNBootSplash.hide({ fade: true });
-            console.log('Bootsplash has been hidden successfully');
-        });
-    }, []);
     return (
         <NativeBaseProvider>
             <Box
@@ -45,15 +40,24 @@ export default function Login({ navigation }) {
                 <VStack space={2} mt={5}>
                     <FormControl>
                         <FormControl.Label _text={{ color: 'muted.700', fontSize: 'sm', fontWeight: 600 }}>
-                            Email ID
+                            Username
                         </FormControl.Label>
-                        <Input />
+                        <TextInput
+                            style={styles.input}
+                            onChangeText={setUsername}
+                            value={username}
+                        />
                     </FormControl>
                     <FormControl mb={5}>
                         <FormControl.Label _text={{ color: 'muted.700', fontSize: 'sm', fontWeight: 600 }}>
                             Password
                         </FormControl.Label>
-                        <Input type="password" />
+                        <TextInput
+                            style={styles.input}
+                            secureTextEntry
+                            onChangeText={setPassword}
+                            value={password}
+                        />
                         <Link
                             _text={{ fontSize: 'xs', fontWeight: '700', color: 'cyan.500' }}
                             alignSelf="flex-end"
@@ -63,7 +67,7 @@ export default function Login({ navigation }) {
                         </Link>
                     </FormControl>
                     <VStack space={2}>
-                        <Button colorScheme="cyan" _text={{ color: 'white' }}>
+                        <Button colorScheme="cyan" _text={{ color: 'white' }} onPress={() => authContext.signIn(username, password)}>
                             Login
                         </Button>
 
@@ -111,3 +115,11 @@ export default function Login({ navigation }) {
         </NativeBaseProvider>
     );
 }
+
+const styles = StyleSheet.create({
+    input: {
+        borderWidth: 1,
+        borderRadius: 5,
+        padding: 10,
+    },
+});

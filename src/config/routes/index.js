@@ -1,10 +1,12 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useContext, useState, useReducer } from 'react';
 import 'react-native-gesture-handler';
-import { TouchableOpacity } from 'react-native';
+import { TouchableOpacity, Button, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-ionicons';
+import RNBootSplash from 'react-native-bootsplash';
 
 import Create from '../../pages/Create';
 import Home from '../../pages/Home';
@@ -14,31 +16,55 @@ import Login from '../../pages/Login';
 import Signup from '../../pages/Signup';
 import { AuthContext } from '../../context/auth/AuthContext';
 import { View, Text, Spinner } from 'native-base';
+import { AuthReducers, initialAuthState } from '../../context/auth/AuthReducers';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Item from '../../pages/Item';
 
 const Stack = createStackNavigator();
 
 const Routes = () => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [userToken, setUserToken] = useState(null);
+  const { authState, dispatch } = useContext(AuthContext)
+  // const [isLoading, setIsLoading] = useState(true);
+  // const [userToken, setUserToken] = useState(null);
+  // const [authState, dispatch] = useReducer(AuthReducers, initialAuthState)
 
-  const authContext = useMemo(() => ({
-    signIn: () => {
-      setIsLoading(false);
-      setUserToken("abcd");
-    },
-    signOut: () => {
-      setIsLoading(false);
-      setUserToken(null);
-    }
-  }), [])
+  // const authContext = useMemo(() => ({
+  //   signIn: (username, password) => {
+  //     let token = null;
+  //     if (username === "nikko" && password === "123") {
+  //       token = "abcd";
+  //     }
+  //     dispatch({ type: 'LOGIN', userToken: token });
+  //   },
+  //   signOut: () => {
+  //     dispatch({ type: 'LOGOUT' });
+  //   }
+  // }), [])
 
   useEffect(() => {
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 3000);
-  }, [])
+    // const init = async () => {
+    //   setTimeout(() => {
+    //     dispatch({ type: 'RETREIVE_TOKEN' });
+    //   }, 3000);
+    // };
 
-  if (isLoading) {
+    const init = async () => {
+      let userToken = null;
+      try {
+        userToken = await AsyncStorage.getItem("userToken");
+      } catch (error) {
+        console.log("error restore token", error)
+      }
+      dispatch({ type: "RESTORE_TOKEN", userToken });
+    };
+
+    init().finally(async () => {
+      await RNBootSplash.hide({ fade: true });
+      console.log('Bootsplash has been hidden successfully');
+    });
+  }, []);
+
+  if (authState.isLoading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <Text>Loading...</Text>
@@ -48,16 +74,82 @@ const Routes = () => {
   }
 
   return (
-    <AuthContext.Provider value={authContext}>
-      <SafeAreaProvider>
-        <NavigationContainer>
-          {
-            userToken === null ? <AuthStack /> : <MainStack />
-          }
-        </NavigationContainer>
-      </SafeAreaProvider>
-    </AuthContext.Provider>
+    <SafeAreaProvider>
+      <NavigationContainer>
+        {
+          authState.userToken === null ? <AuthStack /> : <MyTabs />
+        }
+      </NavigationContainer>
+    </SafeAreaProvider>
   );
+}
+
+const Tab = createBottomTabNavigator();
+
+function MyTabs() {
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        headerShown: false,
+        tabBarIcon: ({ focused, color, size }) => {
+          let iconName;
+
+          if (route.name === 'Home') {
+            iconName = focused ? 'ios-information-circle' : 'ios-information-circle-outline';
+          } else if (route.name === 'Item') {
+            iconName = focused ? 'list-box' : 'list';
+          } else if (route.name === 'Logout') {
+            iconName = 'ios-log-out';
+          }
+
+          // You can return any component that you like here!
+          return <Icon name={iconName} size={size} color={color} />;
+        },
+        tabBarActiveTintColor: 'tomato',
+        tabBarInactiveTintColor: 'gray',
+      })}
+    >
+      <Tab.Screen name="Home" component={MainStack} />
+      <Tab.Screen name="Item" component={ItemStack} />
+      <Tab.Screen name="Logout" component={LogoutScreen} />
+    </Tab.Navigator>
+  );
+}
+
+function LogoutScreen() {
+  const { authContext } = useContext(AuthContext);
+  useEffect(() => {
+    authContext.signOut()
+  }, [])
+  return (
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <Spinner size="lg" />
+      <Text>Signing out...</Text>
+    </View>
+  );
+}
+
+const ItemStack = () => {
+  return (
+    <Stack.Navigator>
+      <Stack.Screen
+        name="Item"
+        component={Item}
+        options={({ navigation }) => ({
+          title: 'Item',
+          headerRight: () => (
+            <TouchableOpacity onPress={() => navigation.navigate('Create')}>
+              <Icon
+                ios="ios-add"
+                android="md-add"
+                style={{ marginRight: 15 }}
+              />
+            </TouchableOpacity>
+          ),
+        })}
+      />
+    </Stack.Navigator>
+  )
 }
 
 const MainStack = () => {
