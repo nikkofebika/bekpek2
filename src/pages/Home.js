@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useContext } from 'react';
-import { FlatList, Text, Button } from 'native-base';
+import React, {useEffect, useState, useContext} from 'react';
+import {FlatList, Text, Button} from 'native-base';
 import Card from '../components/molecules/Card';
 import RNBootSplash from 'react-native-bootsplash';
 
@@ -14,17 +14,20 @@ import {
   dropTableListItems,
   getAllListItems,
 } from '../database/listItems';
-import { createTableItems, dropTableItems, insertAll } from '../database/Items';
+import {createTableItems, dropTableItems, insertAll} from '../database/Items';
+import {createTableUsers, dropTableUsers} from '../database/Users';
 
-const Home = ({ route }) => {
+const Home = ({route}) => {
   const [datas, setDatas] = useState([]);
   useEffect(() => {
     // dropTableItems();
     // dropTableListItems();
     // dropTableLists();
+    // dropTableUsers();
     // createTableListItems();
     // createTableList();
     // createTableItems();
+    // createTableUsers();
     // console.log('tai');
     // insertAll();
     // getAllListItems();
@@ -33,7 +36,7 @@ const Home = ({ route }) => {
     };
 
     init().finally(async () => {
-      await RNBootSplash.hide({ fade: true });
+      await RNBootSplash.hide({fade: true});
       console.log('Bootsplash has been hidden successfully');
     });
   }, []);
@@ -53,18 +56,20 @@ const Home = ({ route }) => {
     del.success && getLists();
   };
 
-  const renderItem = ({ item }) => {
+  const renderItem = ({item}) => {
     return (
       <Card data={item} handleDeleteList={() => handleDeleteList(item.id)} />
     );
   };
 
   if (datas.length > 0) {
-    return <FlatList
-      data={datas}
-      renderItem={renderItem}
-      keyExtractor={item => item.id}
-    />
+    return (
+      <FlatList
+        data={datas}
+        renderItem={renderItem}
+        keyExtractor={item => item.id}
+      />
+    );
   }
   return <Text>No Data</Text>;
 };
