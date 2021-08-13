@@ -38,7 +38,7 @@ export const getAllListItems = () => {
             }
           }
           console.log('res getAllListItems', results);
-          resolve({success: true, data: results});
+          resolve({ success: true, data: results });
         },
         error => {
           console.log('error db getItems', error.message);
@@ -71,7 +71,7 @@ export const getListItemByListId = listId => {
               });
             }
           }
-          resolve({success: true, data: results, returned: total_returned});
+          resolve({ success: true, data: results, returned: total_returned });
         },
         error => {
           console.log('error db getItems', error.message);
@@ -124,6 +124,21 @@ export const updateListItems = (listId, items) => {
     });
   });
 };
+export const deleteListItemByItemId = (id) => {
+  return new Promise((resolve, reject) => {
+    db.transaction(fx => {
+      fx.executeSql('DELETE FROM list_items WHERE item_id = ?', [id],
+        (fx, res) => {
+          console.log('res deleteListItemByItemId', res);
+          resolve(res);
+        },
+        error => {
+          console.log('error db deleteListItemByItemId', error.message);
+          reject(error.message);
+        });
+    });
+  });
+};
 export const updateReturnListItems = (id, status) => {
   return new Promise((resolve, reject) => {
     console.log('idid', id);
@@ -134,7 +149,7 @@ export const updateReturnListItems = (id, status) => {
         [status, id],
         (fx, res) => {
           console.log('res updateReturnListItems', res);
-          resolve({success: true});
+          resolve({ success: true });
         },
         error => {
           console.log('error db insertListItems', error.message);

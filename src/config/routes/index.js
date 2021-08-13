@@ -94,10 +94,12 @@ function MyTabs() {
         tabBarIcon: ({ focused, color, size }) => {
           let iconName;
 
-          if (route.name === 'Home') {
-            iconName = focused ? 'ios-information-circle' : 'ios-information-circle-outline';
-          } else if (route.name === 'Item') {
+          if (route.name === 'Index') {
+            iconName = 'ios-home';
+          } else if (route.name === 'ItemStack') {
             iconName = focused ? 'list-box' : 'list';
+          } else if (route.name === 'About') {
+            iconName = focused ? 'ios-information-circle' : 'ios-information-circle-outline';
           } else if (route.name === 'Logout') {
             iconName = 'ios-log-out';
           }
@@ -109,10 +111,20 @@ function MyTabs() {
         tabBarInactiveTintColor: 'gray',
       })}
     >
-      <Tab.Screen name="Home" component={MainStack} />
-      <Tab.Screen name="Item" component={ItemStack} />
+      <Tab.Screen name="Index" component={MainStack} />
+      <Tab.Screen name="ItemStack" component={ItemStack} />
+      <Tab.Screen name="About" component={AboutScreen} />
       <Tab.Screen name="Logout" component={LogoutScreen} />
     </Tab.Navigator>
+  );
+}
+
+function AboutScreen() {
+  return (
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <Spinner size="lg" />
+      <Text>AboutScreen</Text>
+    </View>
   );
 }
 
@@ -135,18 +147,6 @@ const ItemStack = () => {
       <Stack.Screen
         name="Item"
         component={Item}
-        options={({ navigation }) => ({
-          title: 'Item',
-          headerRight: () => (
-            <TouchableOpacity onPress={() => navigation.navigate('Create')}>
-              <Icon
-                ios="ios-add"
-                android="md-add"
-                style={{ marginRight: 15 }}
-              />
-            </TouchableOpacity>
-          ),
-        })}
       />
     </Stack.Navigator>
   )

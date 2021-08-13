@@ -16,12 +16,15 @@ import {
 } from 'native-base';
 import { AuthContext } from '../context/auth/AuthContext';
 import { StyleSheet, TextInput } from 'react-native';
+// import { createTableUsers } from '../database/Users';
 
 export default function Login({ navigation }) {
     const { authContext } = useContext(AuthContext);
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
-
+    // useEffect(() => {
+    //     createTableUsers();
+    // }, [])
     return (
         <NativeBaseProvider>
             <Box
