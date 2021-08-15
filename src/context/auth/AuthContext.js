@@ -10,21 +10,21 @@ const AuthContextProvider = props => {
   const authContext = useMemo(
     () => ({
       signIn: async (username, password) => {
-        let token = null;
+        // let token = null;
         let userData = null;
         let cekUser = await getUser({username, password});
         console.log(cekUser);
         if (cekUser.success) {
-          token = 'abcd';
-          userData = cekUser.data;
-          console.log('userData', userData);
-          await AsyncStorage.setItem('userToken', token);
-          await AsyncStorage.setItem('userData', JSON.stringify(userData));
+          // token = 'abcd';
+          // await AsyncStorage.setItem('userToken', token);
+          userData = JSON.stringify(cekUser.data);
+          await AsyncStorage.setItem('userData', userData);
         }
-        dispatch({type: 'LOGIN', userToken: token, userData});
+        // dispatch({type: 'LOGIN', userToken: token, userData});
+        dispatch({type: 'LOGIN', userData});
       },
       signOut: async () => {
-        await AsyncStorage.removeItem('userToken');
+        await AsyncStorage.removeItem('userData');
         dispatch({type: 'LOGOUT'});
       },
     }),

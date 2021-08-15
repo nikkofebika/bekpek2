@@ -1,12 +1,12 @@
 import db from '../config/db';
 import {getDateNow} from '../utils/general';
 
-export const insertList = name => {
+export const insertList = data => {
   return new Promise((resolve, reject) => {
     db.transaction(tx => {
       tx.executeSql(
-        `INSERT INTO lists (name) VALUES (?)`,
-        [name],
+        `INSERT INTO lists (user_id, name) VALUES (?,?)`,
+        [data.userId, data.name],
         (sqlTx, res) => {
           console.log('res', res);
           console.log(`${name} added successfully`);
@@ -42,12 +42,12 @@ export const updateList = data => {
 export const createTableList = () => {
   db.transaction(tx => {
     tx.executeSql(
-      `CREATE TABLE lists (id INTEGER PRIMARY KEY AUTOINCREMENT, name VARCHAR(50), created DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP , updated DATETIME NULL DEFAULT NULL)`,
+      `CREATE TABLE IF NOT EXISTS lists (id INTEGER PRIMARY KEY AUTOINCREMENT, name VARCHAR(50), user_id INTEGER, created DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP , updated DATETIME NULL DEFAULT NULL)`,
       [],
       (sqlTx, res) => {
-        console.log('success create table');
-        console.log('res', res.rows.item(0));
-        console.log('sqlTx', sqlTx);
+        // console.log('success create table');
+        // console.log('res', res.rows.item(0));
+        // console.log('sqlTx', sqlTx);
       },
       error => {
         console.log('error create table');
@@ -74,12 +74,13 @@ export const deleteList = id => {
     });
   });
 };
-export const getAllList = () => {
+export const getAllList = userId => {
+  console.log('tesssssss', userId);
   return new Promise((resolve, reject) => {
     db.transaction(tx => {
       tx.executeSql(
-        `SELECT lists.id, lists.created, lists.updated, lists.name as list_name, items.name as item_name FROM lists JOIN list_items li ON li.list_id=lists.id JOIN items ON items.id=li.item_id ORDER BY lists.id DESC`,
-        [],
+        `SELECT lists.id, lists.created, lists.updated, lists.name as list_user_idname, items.name as item_name FROM lists JOIN list_items li ON li.list_id=lists.id JOIN items ON items.id=li.item_id WHERE lists.user_id = ? ORDER BY lists.id DESC`,
+        [userId],
         (sqlTx, res) => {
           let len = res.rows.length;
           if (len > 0) {
@@ -97,7 +98,7 @@ export const getAllList = () => {
               results.push(item);
             }
             // console.log('test', test);
-            console.log('results', results);
+            console.log('results getAllList', results);
 
             var o = {};
             var datas = results.reduce(function (r, el) {
@@ -120,6 +121,7 @@ export const getAllList = () => {
 
             resolve(datas);
           }
+          resolve([]);
         },
         error => {
           console.log('error db getAllList', error.message);

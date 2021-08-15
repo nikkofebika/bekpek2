@@ -1,101 +1,186 @@
-import React, { useEffect, useState } from 'react'
-import { Button, FlatList, HStack, Input, Modal, Text } from 'native-base'
-import { deleteItem, getAllItems, insertItem } from '../database/Items';
+import React, {useEffect, useState, useRef, useContext} from 'react';
+import {
+  AlertDialog,
+  Button,
+  Center,
+  FlatList,
+  HStack,
+  Input,
+  Modal,
+  Spinner,
+  Text,
+  VStack,
+} from 'native-base';
+import {
+  deleteItem,
+  getAllItems,
+  insertItem,
+  syncronizingItems,
+} from '../database/Items';
 import Icon from '../components/atoms/Icon';
-import { StyleSheet, TextInput, TouchableOpacity } from 'react-native';
+import {AuthContext} from '../context/auth/AuthContext';
 
-const Item = ({ navigation }) => {
-    const [countDeleted, setCountDeleted] = useState(0);
-    const [itemName, setItemName] = useState("");
-    const [dataItems, setDataItems] = useState([]);
-    const [showModal, setShowModal] = useState(false);
-    const [showError, setShowError] = useState(false);
+const Item = ({navigation}) => {
+  const [countDeleted, setCountDeleted] = useState(0);
+  const [itemName, setItemName] = useState('');
+  const [dataItems, setDataItems] = useState([]);
+  const [isSynchronizing, setIsSynchronizing] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [errors, setErrors] = useState({status: false, msg: ''});
+  const [isOpenAlert, setIsOpenAlert] = useState(false);
+  const onCloseAlert = () => setIsOpenAlert(false);
+  const cancelRefAlert = useRef();
 
-    React.useLayoutEffect(() => {
-        navigation.setOptions({
-            headerRight: () => (
-                <Icon name="add" style={{ marginRight: 15 }} onPress={() => setShowModal(true)} />
-            ),
-        });
-    }, [navigation]);
+  const {authState} = useContext(AuthContext);
+  const userData = JSON.parse(authState.userData);
+  const userId = userData.id;
 
-    useEffect(() => {
-        console.log('effect')
-        fetchItems();
-    }, [countDeleted]);
+  React.useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <HStack>
+          <Icon
+            name="sync"
+            style={{marginRight: 20}}
+            onPress={() => setIsOpenAlert(!isOpenAlert)}
+          />
+          <Icon
+            name="add"
+            style={{marginRight: 15}}
+            onPress={() => setShowModal(true)}
+          />
+        </HStack>
+      ),
+    });
+  }, [navigation]);
 
-    const fetchItems = async () => {
-        const res = await getAllItems();
-        if (res.success) {
-            console.log('res items', res.data);
-            setDataItems(res.data);
-        } else {
-            console.log('error fetch items', res.msg);
-        }
-    };
+  useEffect(() => {
+    fetchItems();
+  }, [countDeleted]);
 
-    const handleDeleteItem = async (id) => {
-        await deleteItem(id)
+  const fetchItems = async () => {
+    const res = await getAllItems(userId);
+    if (res.success) {
+      console.log('res items', res.data);
+      setDataItems(res.data);
+    } else {
+      console.log('error fetch items', res.msg);
+    }
+  };
+
+  const handleDeleteItem = async id => {
+    await deleteItem(id);
+    setCountDeleted(countDeleted + 1);
+  };
+
+  const handleInsertItem = async () => {
+    if (itemName === '') {
+      setErrors({status: true, msg: 'Nama item harus diisi!'});
+    } else {
+      let saveItem = await insertItem({userId, name: itemName});
+      if (saveItem.success) {
+        setItemName('');
         setCountDeleted(countDeleted + 1);
+        setShowModal(false);
+        setErrors({status: false});
+      } else {
+        setErrors({status: true, msg: 'Item sudah ada!'});
+      }
     }
+  };
 
-    const handleInsertItem = async () => {
-        console.log(itemName)
-        let saveItem = await insertItem(itemName);
-        if (saveItem.success) {
-            setItemName("");
-            setCountDeleted(countDeleted + 1);
-            setShowModal(false);
-        } else {
-            setShowError(true)
-        }
-    }
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setItemName('');
+    setErrors({status: false});
+  };
 
-    if (dataItems.length === 0) {
-        return <Text>Tidak ada item</Text>
-    }
-    return (
-        <>
-            <Modal isOpen={showModal} onClose={() => setShowModal(false)}>
-                <Modal.Content maxWidth="400px">
-                    <Modal.CloseButton />
-                    <Modal.Header>Tambah Item</Modal.Header>
-                    <Modal.Body>
-                        <TextInput
-                            style={styles.input}
-                            onChangeText={setItemName}
-                            value={itemName}
-                        />
-                        {showError && <Text fontSize="xs" color="red.500">Item sudah ada!</Text>}
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button.Group variant="ghost" space={2}>
-                            <Button
-                                onPress={handleInsertItem}>
-                                Simpan
-                            </Button>
-                        </Button.Group>
-                    </Modal.Footer>
-                </Modal.Content>
-            </Modal>
-            <FlatList data={dataItems} renderItem={({ item }) => {
-                return (
-                    <HStack bg="white" p={3} my={1} justifyContent="space-between">
-                        <Text>{item.name}</Text>
-                        <Icon name="trash" onPress={() => handleDeleteItem(item.id)} />
-                    </HStack>
-                )
-            }} />
-        </>
-    )
-}
+  const handleSyncronizing = async () => {
+    setIsSynchronizing(true);
+    setTimeout(async () => {
+      const syncronizeItems = await syncronizingItems(userId);
+      if (syncronizeItems.success) {
+        setCountDeleted(countDeleted + 1);
+        setIsSynchronizing(false);
+        setIsOpenAlert(false);
+      }
+    }, 2000);
+  };
 
-const styles = StyleSheet.create({
-    input: {
-        borderWidth: 1,
-        borderRadius: 5,
-        padding: 10,
-    },
-});
+  return (
+    <>
+      <Modal isOpen={showModal} onClose={handleCloseModal}>
+        <Modal.Content maxWidth="400px">
+          <Modal.Header>Tambah Item</Modal.Header>
+          <Modal.Body>
+            <Input
+              onChangeText={value => setItemName(value)}
+              value={itemName}
+            />
+            {errors.status && (
+              <Text fontSize="xs" color="red.500">
+                {errors.msg}
+              </Text>
+            )}
+          </Modal.Body>
+          <Modal.Footer>
+            <Button.Group variant="ghost" space={2}>
+              <Button onPress={handleInsertItem}>Simpan</Button>
+            </Button.Group>
+          </Modal.Footer>
+        </Modal.Content>
+      </Modal>
+      <AlertDialog
+        leastDestructiveRef={cancelRefAlert}
+        isOpen={isOpenAlert}
+        onClose={onCloseAlert}
+        motionPreset={'fade'}>
+        <AlertDialog.Content>
+          <AlertDialog.Header fontSize="lg" fontWeight="bold">
+            Sinkronisasi Item
+          </AlertDialog.Header>
+          <AlertDialog.Body>
+            {isSynchronizing === true ? (
+              <Center>
+                <Spinner />
+                <Text>Loading...</Text>
+              </Center>
+            ) : (
+              'Aplikasi akan mensinkronisasi daftar item default. Sinkronisasi sekarang?'
+            )}
+          </AlertDialog.Body>
+          {!isSynchronizing && (
+            <AlertDialog.Footer>
+              <Button
+                colorScheme="red"
+                ref={cancelRefAlert}
+                onPress={onCloseAlert}>
+                Batal
+              </Button>
+              <Button onPress={handleSyncronizing} ml={3}>
+                Ya
+              </Button>
+            </AlertDialog.Footer>
+          )}
+        </AlertDialog.Content>
+      </AlertDialog>
+      {dataItems.length === 0 ? (
+        <Text>Tidak ada item</Text>
+      ) : (
+        <FlatList
+          data={dataItems}
+          renderItem={({item}) => {
+            return (
+              <HStack bg="white" p={3} mt={1} justifyContent="space-between">
+                <Text>{item.name}</Text>
+                <Icon name="trash" onPress={() => handleDeleteItem(item.id)} />
+              </HStack>
+            );
+          }}
+        />
+      )}
+    </>
+  );
+};
 
-export default Item
+export default Item;

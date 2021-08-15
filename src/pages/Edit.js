@@ -106,7 +106,11 @@ const Edit = ({route, navigation}) => {
           data={dataItems}
           renderItem={({item}) => {
             return (
-              <Checkbox value={item.id} my={2}>
+              <Checkbox
+                value={item.id}
+                my={2}
+                accessible={true}
+                accessibilityLabel={item.name}>
                 {item.name}
               </Checkbox>
             );

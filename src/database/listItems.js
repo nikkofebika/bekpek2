@@ -3,12 +3,12 @@ import db from '../config/db';
 export const createTableListItems = () => {
   db.transaction(tx => {
     tx.executeSql(
-      `CREATE TABLE list_items (id INTEGER PRIMARY KEY AUTOINCREMENT, list_id INTEGER, item_id INTEGER, returned TINYINT(1) NOT NULL DEFAULT 0)`,
+      `CREATE TABLE IF NOT EXISTS list_items (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, list_id INTEGER, item_id INTEGER, returned TINYINT(1) NOT NULL DEFAULT 0)`,
       [],
       (sqlTx, res) => {
-        console.log('success create table');
-        console.log('res', res);
-        console.log('sqlTx', sqlTx);
+        // console.log('success create table');
+        // console.log('res', res);
+        // console.log('sqlTx', sqlTx);
         a;
       },
       error => {
@@ -18,12 +18,12 @@ export const createTableListItems = () => {
     );
   });
 };
-export const getAllListItems = () => {
+export const getAllListItems = userId => {
   return new Promise((resolve, reject) => {
     db.transaction(fx => {
       fx.executeSql(
-        'SELECT * FROM list_items',
-        [],
+        'SELECT * FROM list_items WHERE user_id = ?',
+        [userId],
         (fx, res) => {
           let len = res.rows.length;
           let results = [];
@@ -38,7 +38,7 @@ export const getAllListItems = () => {
             }
           }
           console.log('res getAllListItems', results);
-          resolve({ success: true, data: results });
+          resolve({success: true, data: results});
         },
         error => {
           console.log('error db getItems', error.message);
@@ -71,7 +71,7 @@ export const getListItemByListId = listId => {
               });
             }
           }
-          resolve({ success: true, data: results, returned: total_returned });
+          resolve({success: true, data: results, returned: total_returned});
         },
         error => {
           console.log('error db getItems', error.message);
@@ -82,13 +82,13 @@ export const getListItemByListId = listId => {
   });
 };
 
-export const insertListItems = (listId, items) => {
+export const insertListItems = data => {
   return new Promise((resolve, reject) => {
     db.transaction(fx => {
       items.map(item => {
         fx.executeSql(
-          'INSERT INTO list_items (list_id, item_id) VALUES (?,?)',
-          [listId, item],
+          'INSERT INTO list_items (user_id, list_id, item_id) VALUES (?,?,?)',
+          [data.userId, data.listId, data.item],
           (fx, res) => {
             console.log('id item', item);
             console.log('res insertListItems', res);
@@ -103,14 +103,14 @@ export const insertListItems = (listId, items) => {
     });
   });
 };
-export const updateListItems = (listId, items) => {
+export const updateListItems = data => {
   return new Promise((resolve, reject) => {
     db.transaction(fx => {
-      fx.executeSql('DELETE FROM list_items WHERE list_id=' + listId);
-      items.map(item => {
+      fx.executeSql('DELETE FROM list_items WHERE list_id=' + data.listId);
+      data.items.map(item => {
         fx.executeSql(
-          'INSERT INTO list_items (list_id, item_id) VALUES (?,?)',
-          [listId, item],
+          'INSERT INTO list_items (user_id, list_id, item_id) VALUES (?,?,?)',
+          [data.userId, data.listId, item],
           (fx, res) => {
             console.log('res insertListItems', res);
             resolve(res);
@@ -124,10 +124,12 @@ export const updateListItems = (listId, items) => {
     });
   });
 };
-export const deleteListItemByItemId = (id) => {
+export const deleteListItemByItemId = id => {
   return new Promise((resolve, reject) => {
     db.transaction(fx => {
-      fx.executeSql('DELETE FROM list_items WHERE item_id = ?', [id],
+      fx.executeSql(
+        'DELETE FROM list_items WHERE item_id = ?',
+        [id],
         (fx, res) => {
           console.log('res deleteListItemByItemId', res);
           resolve(res);
@@ -135,7 +137,8 @@ export const deleteListItemByItemId = (id) => {
         error => {
           console.log('error db deleteListItemByItemId', error.message);
           reject(error.message);
-        });
+        },
+      );
     });
   });
 };
@@ -149,7 +152,7 @@ export const updateReturnListItems = (id, status) => {
         [status, id],
         (fx, res) => {
           console.log('res updateReturnListItems', res);
-          resolve({ success: true });
+          resolve({success: true});
         },
         error => {
           console.log('error db insertListItems', error.message);

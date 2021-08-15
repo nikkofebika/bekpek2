@@ -90,7 +90,11 @@ const Create = ({navigation}) => {
           data={dataItems}
           renderItem={({item}) => {
             return (
-              <Checkbox value={item.id} my={2}>
+              <Checkbox
+                value={item.id}
+                my={2}
+                accessible={true}
+                accessibilityLabel={item.name}>
                 <Text>
                   {item.id} {item.name}
                 </Text>

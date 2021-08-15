@@ -1,14 +1,15 @@
 import db from '../config/db';
-import { deleteListItemByItemId } from './listItems';
+import {ucWords} from '../utils/general';
+import {deleteListItemByItemId} from './listItems';
 
-export const deleteItem = (id) => {
+export const deleteItem = id => {
   return new Promise((resolve, reject) => {
     db.transaction(tx => {
       tx.executeSql(
         `DELETE FROM items WHERE id = ?`,
         [id],
         async (sqlTx, res) => {
-          await deleteListItemByItemId(id)
+          await deleteListItemByItemId(id);
           console.log('success deleteItem');
           console.log('res', res);
           resolve();
@@ -22,16 +23,15 @@ export const deleteItem = (id) => {
   });
 };
 
-
 export const createTableItems = () => {
   db.transaction(tx => {
     tx.executeSql(
-      `CREATE TABLE items (id INTEGER PRIMARY KEY AUTOINCREMENT, name VARCHAR(50))`,
+      `CREATE TABLE IF NOT EXISTS items (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name VARCHAR(50))`,
       [],
       (sqlTx, res) => {
-        console.log('success create table');
-        console.log('res', res);
-        console.log('sqlTx', sqlTx);
+        // console.log('success create table');
+        // console.log('res', res);
+        // console.log('sqlTx', sqlTx);
       },
       error => {
         console.log('error create table');
@@ -40,22 +40,22 @@ export const createTableItems = () => {
     );
   });
 };
-export const getAllItems = () => {
+export const getAllItems = userId => {
   return new Promise((resolve, reject) => {
     db.transaction(fx => {
       fx.executeSql(
-        'SELECT * FROM items ORDER BY id desc',
-        [],
+        'SELECT * FROM items WHERE user_id = ? ORDER BY id desc',
+        [userId],
         (fx, res) => {
           let len = res.rows.length;
           let results = [];
           if (len > 0) {
             for (let i = 0; i < len; i++) {
               const item = res.rows.item(i);
-              results.push({ id: item.id, name: item.name });
+              results.push({id: item.id, name: item.name});
             }
           }
-          resolve({ success: true, data: results });
+          resolve({success: true, data: results});
         },
         error => {
           console.log('error db getItems', error.message);
@@ -66,47 +66,59 @@ export const getAllItems = () => {
   });
 };
 
-export const insertAll = () => {
+export const syncronizingItems = userId => {
   const datalist = require('../../dataLists.json');
+  let count = 0;
   return new Promise((resolve, reject) => {
     db.transaction(fx => {
       datalist.map(name => {
-        console.log(name);
+        let fixName = ucWords(name);
         fx.executeSql(
-          'INSERT INTO items (name) VALUES (?)',
-          [name],
+          'SELECT id FROM items WHERE user_id = ? AND name = ?',
+          [userId, fixName],
           (fx, res) => {
-            console.log('res insertAll', res);
-            resolve(res);
+            if (res.rows.length === 0) {
+              fx.executeSql(
+                'INSERT INTO items (user_id, name) VALUES (?,?)',
+                [userId, fixName],
+                (fx, res) => {
+                  count++;
+                },
+                error => {
+                  console.log('error db syncronizingItems', error.message);
+                },
+              );
+            }
           },
           error => {
-            console.log('error db getItems', error.message);
+            console.log('error db syncronizingItems', error.message);
             reject(error.message);
           },
         );
       });
+      resolve({success: true, totalDataInserted: count});
     });
   });
 };
 
-export const insertItem = (name) => {
-  console.log("db name", name)
+export const insertItem = data => {
+  console.log('res unsertitem', data);
+  let fixName = ucWords(data.name);
   return new Promise((resolve, reject) => {
     db.transaction(fx => {
       fx.executeSql(
-        'SELECT id FROM items WHERE name = ?',
-        [name],
+        'SELECT id FROM items WHERE user_id = ? AND name = ?',
+        [data.userId, fixName],
         (fx, res) => {
-          console.log("db insertItem", res)
           if (res.rows.length > 0) {
-            resolve({ success: false });
+            resolve({success: false});
           } else {
             fx.executeSql(
-              'INSERT INTO items (name) VALUES (?)',
-              [name],
+              'INSERT INTO items (user_id, name) VALUES (?,?)',
+              [data.userId, fixName],
               (fx, res) => {
                 console.log('res insertItem', res);
-                resolve({ success: true });
+                resolve({success: true});
               },
               error => {
                 console.log('error db insertItem', error.message);
@@ -114,7 +126,6 @@ export const insertItem = (name) => {
               },
             );
           }
-
         },
         error => {
           console.log('error db insertItem', error.message);

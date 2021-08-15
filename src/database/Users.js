@@ -3,12 +3,11 @@ import db from '../config/db';
 export const createTableUsers = () => {
   db.transaction(tx => {
     tx.executeSql(
-      `CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name VARCHAR(50), username VARCHAR(50), password VARCHAR(50))`,
+      `CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, name VARCHAR(50), username VARCHAR(50), password VARCHAR(50))`,
       [],
       (sqlTx, res) => {
-        console.log('success create table users');
-        console.log('res', res.rows.item(0));
-        console.log('sqlTx', sqlTx);
+        // console.log('success create table users');
+        // console.log('sqlTx', sqlTx);
       },
       error => {
         console.log('error create table');
@@ -165,6 +164,7 @@ export const getAllList = () => {
 };
 
 export const getUser = data => {
+  console.log('getUser', data);
   return new Promise((resolve, reject) => {
     db.transaction(tx => {
       tx.executeSql(
