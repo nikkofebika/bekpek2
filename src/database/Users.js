@@ -35,7 +35,7 @@ export const dropTableUsers = () => {
   });
 };
 export const insertUser = data => {
-  console.log('datata', data);
+  // console.log('datata', data);
   return new Promise((resolve, reject) => {
     db.transaction(tx => {
       tx.executeSql(
@@ -44,7 +44,7 @@ export const insertUser = data => {
         (sqlTx, res) => {
           let len = res.rows.length;
           if (len > 0) {
-            console.log('username udah ada');
+            resolve({ success: false });
           } else {
             tx.executeSql(
               `INSERT INTO users (name,username,password) VALUES (?,?,?)`,
@@ -52,7 +52,7 @@ export const insertUser = data => {
               (sqlTx, res) => {
                 console.log('res', res);
                 console.log(`${data.name} added successfully`);
-                resolve({success: true, data: res});
+                resolve({ success: true, data: res });
               },
               error => {
                 console.log('error db insertUser', error.message);
@@ -78,7 +78,7 @@ export const updateList = data => {
         [data.name, dateNow, data.id],
         (sqlTx, res) => {
           console.log(`updateList updated successfully`);
-          resolve({success: true, data: res});
+          resolve({ success: true, data: res });
         },
         error => {
           console.log('error db insert list', error.message);
@@ -97,7 +97,7 @@ export const deleteList = id => {
         [id],
         (sqlTx, res) => {
           tx.executeSql('DELETE FROM list_items WHERE list_id=' + id);
-          resolve({success: true});
+          resolve({ success: true });
         },
         error => {
           console.log('error db delete list');
@@ -164,7 +164,7 @@ export const getAllList = () => {
 };
 
 export const getUser = data => {
-  console.log('getUser', data);
+  // console.log('getUser', data);
   return new Promise((resolve, reject) => {
     db.transaction(tx => {
       tx.executeSql(
@@ -174,8 +174,8 @@ export const getUser = data => {
           let len = res.rows.length;
           const result =
             len > 0
-              ? {success: true, data: res.rows.item(0)}
-              : {success: false};
+              ? { success: true, data: res.rows.item(0) }
+              : { success: false };
           resolve(result);
         },
         error => {

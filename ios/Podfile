@@ -12,6 +12,8 @@ target 'bekpek' do
     :hermes_enabled => false
   )
 
+  pod 'react-native-version-info', :path => '../node_modules/react-native-version-info'
+
   target 'bekpekTests' do
     inherit! :complete
     # Pods for testing

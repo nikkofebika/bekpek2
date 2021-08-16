@@ -1,5 +1,5 @@
-import React, {useEffect, useState, useContext} from 'react';
-import {FlatList, Text, Button, Spinner, View} from 'native-base';
+import React, { useEffect, useState, useContext } from 'react';
+import { FlatList, Text, Button, Spinner, View } from 'native-base';
 import Card from '../components/molecules/Card';
 import RNBootSplash from 'react-native-bootsplash';
 
@@ -19,15 +19,15 @@ import {
   dropTableItems,
   syncronizingItems,
 } from '../database/Items';
-import {createTableUsers, dropTableUsers} from '../database/Users';
-import {AuthContext} from '../context/auth/AuthContext';
+import { createTableUsers, dropTableUsers } from '../database/Users';
+import { AuthContext } from '../context/auth/AuthContext';
 
-const Home = ({route}) => {
+const Home = ({ route }) => {
   const [isRefresh, setIsRefresh] = useState(false);
   const [isLoading, setIsloading] = useState(true);
   const [datas, setDatas] = useState([]);
-  const {authState} = useContext(AuthContext);
-  const {id} = JSON.parse(authState.userData);
+  const { authState } = useContext(AuthContext);
+  const { id } = JSON.parse(authState.userData);
   useEffect(() => {
     // dropTableItems();
     // dropTableListItems();
@@ -39,18 +39,19 @@ const Home = ({route}) => {
     // console.log('tai');
     // syncronizingItems();
     // getAllListItems();
-    const init = async () => {
-      getLists();
-    };
 
-    init().finally(async () => {
-      await RNBootSplash.hide({fade: true});
-      console.log('Bootsplash has been hidden successfully');
-    });
+    // const init = async () => {
+    //   getLists();
+    // };
+
+    // init().finally(async () => {
+    //   await RNBootSplash.hide({fade: true});
+    //   console.log('Bootsplash has been hidden successfully');
+    // });
   }, []);
 
   useEffect(() => {
-    console.log('route', route);
+    // console.log('route', route);
     getLists();
   }, [route.params?.updated]);
 
@@ -65,7 +66,7 @@ const Home = ({route}) => {
     del.success && getLists();
   };
 
-  const renderItem = ({item}) => {
+  const renderItem = ({ item }) => {
     return (
       <Card data={item} handleDeleteList={() => handleDeleteList(item.id)} />
     );
@@ -83,6 +84,7 @@ const Home = ({route}) => {
   if (datas.length > 0) {
     return (
       <FlatList
+        showsVerticalScrollIndicator={false}
         data={datas}
         renderItem={renderItem}
         keyExtractor={item => item.id}

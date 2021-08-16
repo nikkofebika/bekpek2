@@ -1,4 +1,5 @@
-import React, {useEffect, useContext, useState} from 'react';
+import React, { useEffect, useContext, useState } from 'react';
+import { Keyboard } from "react-native";
 import Ionicon from 'react-native-ionicons';
 import {
   NativeBaseProvider,
@@ -10,29 +11,43 @@ import {
   Input,
   Link,
   Button,
-  Icon,
+  Icon as NBIcon,
   IconButton,
   HStack,
+  useToast
 } from 'native-base';
-import {AuthContext} from '../context/auth/AuthContext';
-import {StyleSheet, TextInput} from 'react-native';
-import {createTableUsers} from '../database/Users';
-import RNBootSplash from 'react-native-bootsplash';
+import { AuthContext } from '../context/auth/AuthContext';
+import { createTableUsers } from '../database/Users';
+import Icon from '../components/atoms/Icon';
 
-export default function Login({navigation}) {
-  const {authContext} = useContext(AuthContext);
+export default function Login({ navigation }) {
+  const { authContext, authState } = useContext(AuthContext);
+  const toast = useToast();
+  const [buttonDisabled, setButtonDisabled] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   useEffect(() => {
-    console.log('loginpage');
     createTableUsers();
   }, []);
+
+  const handleLogin = () => {
+    setButtonDisabled(true);
+    Keyboard.dismiss();
+    authContext.signIn(username, password)
+    if (authState.loginUserNotFound) {
+      toast.show({
+        title: "Login gagal",
+        status: "warning",
+        description: "Kombinasi Username dan Password salah",
+      })
+    }
+    setButtonDisabled(false);
+  }
   return (
     <NativeBaseProvider>
       <Box flex={1} p={2} w="90%" mx="auto">
-        <Heading size="lg" color="primary.500">
-          Welcome
-        </Heading>
+        <Heading size="lg" color="primary.500">Welcome</Heading>
         <Heading color="muted.400" size="xs">
           Sign in to continue!
         </Heading>
@@ -40,28 +55,29 @@ export default function Login({navigation}) {
         <VStack space={2} mt={5}>
           <FormControl>
             <FormControl.Label
-              _text={{color: 'muted.700', fontSize: 'sm', fontWeight: 600}}>
+              _text={{ color: 'muted.700', fontSize: 'sm', fontWeight: 600 }}>
               Username
             </FormControl.Label>
-            <TextInput
-              style={styles.input}
-              onChangeText={setUsername}
+            <Input
+              onChangeText={value => setUsername(value)}
               value={username}
             />
           </FormControl>
           <FormControl mb={5}>
             <FormControl.Label
-              _text={{color: 'muted.700', fontSize: 'sm', fontWeight: 600}}>
+              _text={{ color: 'muted.700', fontSize: 'sm', fontWeight: 600 }}>
               Password
             </FormControl.Label>
-            <TextInput
-              style={styles.input}
-              secureTextEntry
-              onChangeText={setPassword}
+            <Input
+              type={showPassword ? "text" : "password"}
+              onChangeText={value => setPassword(value)}
               value={password}
+              InputRightElement={
+                <Icon onPress={() => setShowPassword(!showPassword)} name={showPassword ? "eye-off" : "eye"} style={{ marginRight: 10 }} />
+              }
             />
             <Link
-              _text={{fontSize: 'xs', fontWeight: '700', color: 'cyan.500'}}
+              _text={{ fontSize: 'xs', fontWeight: '700', color: 'cyan.500' }}
               alignSelf="flex-end"
               mt={1}>
               Forget Password?
@@ -70,8 +86,9 @@ export default function Login({navigation}) {
           <VStack space={2}>
             <Button
               colorScheme="cyan"
-              _text={{color: 'white'}}
-              onPress={() => authContext.signIn(username, password)}>
+              _text={{ color: 'white' }}
+              isDisabled={buttonDisabled}
+              onPress={handleLogin}>
               Login
             </Button>
 
@@ -79,7 +96,7 @@ export default function Login({navigation}) {
               <IconButton
                 variant="unstyled"
                 startIcon={
-                  <Icon
+                  <NBIcon
                     as={<Ionicon name="facebook" />}
                     color="muted.700"
                     size="sm"
@@ -89,7 +106,7 @@ export default function Login({navigation}) {
               <IconButton
                 variant="unstyled"
                 startIcon={
-                  <Icon
+                  <NBIcon
                     as={<Ionicon name="google" />}
                     color="muted.700"
                     size="sm"
@@ -99,7 +116,7 @@ export default function Login({navigation}) {
               <IconButton
                 variant="unstyled"
                 startIcon={
-                  <Icon
+                  <NBIcon
                     as={<Ionicon name="github" />}
                     color="muted.700"
                     size="sm"
@@ -113,9 +130,9 @@ export default function Login({navigation}) {
               Pengguna baru?{' '}
             </Text>
             <Link
-              _text={{color: 'cyan.500', bold: true, fontSize: 'sm'}}
+              _text={{ color: 'cyan.500', bold: true, fontSize: 'sm' }}
               onPress={() => navigation.navigate('Signup')}>
-              Sign Up
+              Registrasi
             </Link>
           </HStack>
         </VStack>
@@ -123,11 +140,3 @@ export default function Login({navigation}) {
     </NativeBaseProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  input: {
-    borderWidth: 1,
-    borderRadius: 5,
-    padding: 10,
-  },
-});

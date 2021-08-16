@@ -1,11 +1,12 @@
-import React, {useEffect, useContext, useState, useReducer} from 'react';
+import React, { useEffect, useContext, useState, useReducer } from 'react';
 import 'react-native-gesture-handler';
-import {TouchableOpacity, Button, ActivityIndicator} from 'react-native';
-import {NavigationContainer} from '@react-navigation/native';
-import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import {createStackNavigator} from '@react-navigation/stack';
-import {SafeAreaProvider, SafeAreaView} from 'react-native-safe-area-context';
-import Icon from 'react-native-ionicons';
+import { TouchableOpacity } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createStackNavigator } from '@react-navigation/stack';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import Ionicon from 'react-native-ionicons';
+import Icon from "../../components/atoms/Icon";
 import RNBootSplash from 'react-native-bootsplash';
 
 import Create from '../../pages/Create';
@@ -14,16 +15,17 @@ import Edit from '../../pages/Edit';
 import Detail from '../../pages/Detail';
 import Login from '../../pages/Login';
 import Signup from '../../pages/Signup';
-import {AuthContext} from '../../context/auth/AuthContext';
-import {View, Text, Spinner} from 'native-base';
+import { AuthContext } from '../../context/auth/AuthContext';
+import { View, Text, Spinner, Image, Center, VStack } from 'native-base';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Item from '../../pages/Item';
-import {getUser} from '../../database/Users';
+import { getUser } from '../../database/Users';
+import About from '../../pages/About';
 
 const Stack = createStackNavigator();
 
 const Routes = () => {
-  const {authState, dispatch} = useContext(AuthContext);
+  const { authState, dispatch } = useContext(AuthContext);
   // const [isLoading, setIsLoading] = useState(true);
   // const [userToken, setUserToken] = useState(null);
   // const [authState, dispatch] = useReducer(AuthReducers, initialAuthState)
@@ -49,7 +51,6 @@ const Routes = () => {
     // };
 
     const init = async () => {
-      console.log('index route');
       let userData = null;
       try {
         getUserData = await AsyncStorage.getItem('userData');
@@ -63,18 +64,18 @@ const Routes = () => {
       } catch (error) {
         console.log('error restore token', error);
       }
-      dispatch({type: 'RESTORE_TOKEN', userData});
+      dispatch({ type: 'RESTORE_TOKEN', userData });
     };
 
     init().finally(async () => {
-      await RNBootSplash.hide({fade: true});
+      await RNBootSplash.hide({ fade: true });
       console.log('INDEX Bootsplash has been hidden successfully');
     });
   }, []);
 
   if (authState.isLoading) {
     return (
-      <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <Text>Loading...</Text>
         <Spinner size="lg" />
       </View>
@@ -95,9 +96,13 @@ const Tab = createBottomTabNavigator();
 function MyTabs() {
   return (
     <Tab.Navigator
-      screenOptions={({route}) => ({
-        headerShown: false,
-        tabBarIcon: ({focused, color, size}) => {
+      screenOptions={({ route }) => ({
+        // headerShown: false,
+        headerStyle: {
+          backgroundColor: '#01998D',
+        },
+        headerTintColor: '#fff',
+        tabBarIcon: ({ focused, color, size }) => {
           let iconName;
 
           if (route.name === 'Index') {
@@ -113,35 +118,26 @@ function MyTabs() {
           }
 
           // You can return any component that you like here!
-          return <Icon name={iconName} size={size} color={color} />;
+          return <Ionicon name={iconName} size={size} color={color} />;
         },
-        tabBarActiveTintColor: 'tomato',
+        tabBarActiveTintColor: '#BB5D4C',
         tabBarInactiveTintColor: 'gray',
       })}>
-      <Tab.Screen name="Index" component={MainStack} />
-      <Tab.Screen name="ItemStack" component={ItemStack} />
-      <Tab.Screen name="About" component={AboutScreen} />
-      <Tab.Screen name="Logout" component={LogoutScreen} />
+      <Tab.Screen name="Index" component={MainStack} options={{ headerShown: false, title: "Home" }} />
+      <Tab.Screen name="ItemStack" component={ItemStack} options={{ headerShown: false, title: "Item" }} />
+      <Tab.Screen name="About" component={About} options={{ title: "Info" }} />
+      <Tab.Screen name="Logout" component={LogoutScreen} options={{ headerShown: false }} />
     </Tab.Navigator>
   );
 }
 
-function AboutScreen() {
-  return (
-    <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-      <Spinner size="lg" />
-      <Text>AboutScreen</Text>
-    </View>
-  );
-}
-
 function LogoutScreen() {
-  const {authContext} = useContext(AuthContext);
+  const { authContext } = useContext(AuthContext);
   useEffect(() => {
     authContext.signOut();
   }, []);
   return (
-    <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
       <Spinner size="lg" />
       <Text>Signing out...</Text>
     </View>
@@ -150,50 +146,58 @@ function LogoutScreen() {
 
 const ItemStack = () => {
   return (
-    <Stack.Navigator>
-      <Stack.Screen name="Item" component={Item} />
+    <Stack.Navigator screenOptions={({ route }) => ({
+      headerStyle: {
+        backgroundColor: '#01998D',
+      },
+      headerTintColor: '#fff'
+    })}>
+      <Stack.Screen name="Daftar Item" component={Item} />
     </Stack.Navigator>
   );
 };
 
 const MainStack = () => {
   return (
-    <Stack.Navigator initialRouteName="Home">
+    <Stack.Navigator initialRouteName="Home" screenOptions={({ route }) => ({
+      headerStyle: {
+        backgroundColor: '#01998D',
+      },
+      headerTintColor: '#fff'
+    })}>
       <Stack.Screen
         name="Home"
         component={Home}
-        options={({navigation}) => ({
+        options={({ navigation }) => ({
           title: 'BekPek',
           headerRight: () => (
-            <TouchableOpacity onPress={() => navigation.navigate('Create')}>
-              <Icon ios="ios-add" android="md-add" style={{marginRight: 15}} />
-            </TouchableOpacity>
+            <Icon onPress={() => navigation.navigate('Create')} name="add" style={{ marginRight: 15, color: "#fff" }} />
           ),
         })}
       />
       <Stack.Screen
         name="Create"
         component={Create}
-        // options={({navigation}) => ({
-        //   headerRight: () => (
-        // <HStack>
-        //   <TouchableOpacity onPress={() => alert('search')}>
-        //     <Icon
-        //       ios="ios-search"
-        //       android="md-search"
-        //       style={{marginRight: 15}}
-        //     />
-        //   </TouchableOpacity>
-        //   <TouchableOpacity onPress={() => alert('created')}>
-        //     <Icon
-        //       ios="ios-checkmark-circle-outline"
-        //       android="md-checkmark-circle-outline"
-        //       style={{marginRight: 15, color: 'green'}}
-        //     />
-        //   </TouchableOpacity>
-        // </HStack>
-        // ),
-        // })}
+      // options={({navigation}) => ({
+      //   headerRight: () => (
+      // <HStack>
+      //   <TouchableOpacity onPress={() => alert('search')}>
+      //     <Icon
+      //       ios="ios-search"
+      //       android="md-search"
+      //       style={{marginRight: 15}}
+      //     />
+      //   </TouchableOpacity>
+      //   <TouchableOpacity onPress={() => alert('created')}>
+      //     <Icon
+      //       ios="ios-checkmark-circle-outline"
+      //       android="md-checkmark-circle-outline"
+      //       style={{marginRight: 15, color: 'green'}}
+      //     />
+      //   </TouchableOpacity>
+      // </HStack>
+      // ),
+      // })}
       />
       <Stack.Screen
         name="Edit"

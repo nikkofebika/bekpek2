@@ -1,6 +1,6 @@
 import db from '../config/db';
-import {ucWords} from '../utils/general';
-import {deleteListItemByItemId} from './listItems';
+import { ucWords } from '../utils/general';
+import { deleteListItemByItemId } from './listItems';
 
 export const deleteItem = id => {
   return new Promise((resolve, reject) => {
@@ -52,10 +52,10 @@ export const getAllItems = userId => {
           if (len > 0) {
             for (let i = 0; i < len; i++) {
               const item = res.rows.item(i);
-              results.push({id: item.id, name: item.name});
+              results.push({ id: item.id, name: item.name });
             }
           }
-          resolve({success: true, data: results});
+          resolve({ success: true, data: results });
         },
         error => {
           console.log('error db getItems', error.message);
@@ -96,13 +96,13 @@ export const syncronizingItems = userId => {
           },
         );
       });
-      resolve({success: true, totalDataInserted: count});
+      resolve({ success: true, totalDataInserted: count });
     });
   });
 };
 
 export const insertItem = data => {
-  console.log('res unsertitem', data);
+  // console.log('res unsertitem', data);
   let fixName = ucWords(data.name);
   return new Promise((resolve, reject) => {
     db.transaction(fx => {
@@ -111,14 +111,14 @@ export const insertItem = data => {
         [data.userId, fixName],
         (fx, res) => {
           if (res.rows.length > 0) {
-            resolve({success: false});
+            resolve({ success: false });
           } else {
             fx.executeSql(
               'INSERT INTO items (user_id, name) VALUES (?,?)',
               [data.userId, fixName],
               (fx, res) => {
                 console.log('res insertItem', res);
-                resolve({success: true});
+                resolve({ success: true });
               },
               error => {
                 console.log('error db insertItem', error.message);

@@ -1,4 +1,4 @@
-import React, {useEffect, useState, useLayoutEffect} from 'react';
+import React, { useEffect, useState, useLayoutEffect, useContext } from 'react';
 import {
   Checkbox,
   FlatList,
@@ -8,13 +8,17 @@ import {
   Text,
   VStack,
 } from 'native-base';
-import {getAllItems} from '../database/Items';
-import {TouchableOpacity} from 'react-native';
+import { getAllItems } from '../database/Items';
+import { TouchableOpacity } from 'react-native';
 import Icon from 'react-native-ionicons';
-import {getAllList, insertList} from '../database/Lists';
-import {insertListItems} from '../database/listItems';
+import { getAllList, insertList } from '../database/Lists';
+import { insertListItems } from '../database/listItems';
+import { AuthContext } from '../context/auth/AuthContext';
 
-const Create = ({navigation}) => {
+const Create = ({ navigation }) => {
+  const { authState } = useContext(AuthContext);
+  const userData = JSON.parse(authState.userData);
+  const userId = userData.id;
   const [listName, setListName] = useState('');
   const [dataItems, setDataItems] = useState([]);
   const [selectedItems, setSelectedItems] = useState([]);
@@ -27,14 +31,14 @@ const Create = ({navigation}) => {
             <Icon
               ios="ios-search"
               android="md-search"
-              style={{marginRight: 15}}
+              style={{ marginRight: 15 }}
             />
           </TouchableOpacity>
           <TouchableOpacity onPress={submitForm}>
             <Icon
               ios="ios-checkmark-circle-outline"
               android="md-checkmark-circle-outline"
-              style={{marginRight: 15, color: 'green'}}
+              style={{ marginRight: 15, color: 'green' }}
             />
           </TouchableOpacity>
         </HStack>
@@ -47,7 +51,7 @@ const Create = ({navigation}) => {
   }, []);
 
   const fetchItems = async () => {
-    const res = await getAllItems();
+    const res = await getAllItems(userId);
     if (res.success) {
       console.log('res items', res.data);
       setDataItems(res.data);
@@ -57,15 +61,15 @@ const Create = ({navigation}) => {
   };
 
   const submitForm = async () => {
-    const saveListName = await insertList(listName);
+    const saveListName = await insertList({ userId, name: listName });
     if (saveListName.success) {
       console.log('selectedItems', selectedItems);
-      await insertListItems(saveListName.data.insertId, selectedItems);
-      await getAllList();
+      await insertListItems({ userId, listId: saveListName.data.insertId, items: selectedItems });
+      await getAllList(userId);
       // navigation.popToTop('Home', {updated: true});
       navigation.navigate({
         name: 'Home',
-        params: {updated: true},
+        params: { updated: true },
         merge: true,
       });
     }
@@ -88,7 +92,7 @@ const Create = ({navigation}) => {
           width="100%"
           bg="primary.300"
           data={dataItems}
-          renderItem={({item}) => {
+          renderItem={({ item }) => {
             return (
               <Checkbox
                 value={item.id}

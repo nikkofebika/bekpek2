@@ -1,5 +1,5 @@
 import db from '../config/db';
-import {getDateNow} from '../utils/general';
+import { getDateNow } from '../utils/general';
 
 export const insertList = data => {
   return new Promise((resolve, reject) => {
@@ -10,7 +10,7 @@ export const insertList = data => {
         (sqlTx, res) => {
           console.log('res', res);
           console.log(`${name} added successfully`);
-          resolve({success: true, data: res});
+          resolve({ success: true, data: res });
         },
         error => {
           console.log('error db insert list', error.message);
@@ -29,7 +29,7 @@ export const updateList = data => {
         [data.name, dateNow, data.id],
         (sqlTx, res) => {
           console.log(`updateList updated successfully`);
-          resolve({success: true, data: res});
+          resolve({ success: true, data: res });
         },
         error => {
           console.log('error db insert list', error.message);
@@ -64,7 +64,7 @@ export const deleteList = id => {
         [id],
         (sqlTx, res) => {
           tx.executeSql('DELETE FROM list_items WHERE list_id=' + id);
-          resolve({success: true});
+          resolve({ success: true });
         },
         error => {
           console.log('error db delete list');
@@ -75,7 +75,7 @@ export const deleteList = id => {
   });
 };
 export const getAllList = userId => {
-  console.log('tesssssss', userId);
+  // console.log('tesssssss', userId);
   return new Promise((resolve, reject) => {
     db.transaction(tx => {
       tx.executeSql(
