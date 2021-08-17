@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useContext } from 'react';
+import React, {useEffect, useState, useRef, useContext} from 'react';
 import {
   AlertDialog,
   Button,
@@ -17,21 +17,22 @@ import {
   syncronizingItems,
 } from '../database/Items';
 import Icon from '../components/atoms/Icon';
-import { AuthContext } from '../context/auth/AuthContext';
+import {AuthContext} from '../context/auth/AuthContext';
+import {SafeAreaView} from 'react-native-safe-area-context';
 
-const Item = ({ navigation }) => {
+const Item = ({navigation}) => {
   const [countDeleted, setCountDeleted] = useState(0);
   const [itemName, setItemName] = useState('');
   const [dataItems, setDataItems] = useState([]);
   const [isRefresh, setIsRefresh] = useState(false);
   const [isSynchronizing, setIsSynchronizing] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [errors, setErrors] = useState({ status: false, msg: '' });
+  const [errors, setErrors] = useState({status: false, msg: ''});
   const [isOpenAlert, setIsOpenAlert] = useState(false);
   const onCloseAlert = () => setIsOpenAlert(false);
   const cancelRefAlert = useRef();
 
-  const { authState } = useContext(AuthContext);
+  const {authState} = useContext(AuthContext);
   const userData = JSON.parse(authState.userData);
   const userId = userData.id;
 
@@ -41,12 +42,12 @@ const Item = ({ navigation }) => {
         <HStack>
           <Icon
             name="sync"
-            style={{ marginRight: 20, color: "#fff" }}
+            style={{marginRight: 20, color: '#fff'}}
             onPress={() => setIsOpenAlert(!isOpenAlert)}
           />
           <Icon
             name="add"
-            style={{ marginRight: 15, color: "#fff" }}
+            style={{marginRight: 15, color: '#fff'}}
             onPress={() => setShowModal(true)}
           />
         </HStack>
@@ -75,16 +76,16 @@ const Item = ({ navigation }) => {
 
   const handleInsertItem = async () => {
     if (itemName === '') {
-      setErrors({ status: true, msg: 'Nama item harus diisi!' });
+      setErrors({status: true, msg: 'Nama item harus diisi!'});
     } else {
-      let saveItem = await insertItem({ userId, name: itemName });
+      let saveItem = await insertItem({userId, name: itemName});
       if (saveItem.success) {
         setItemName('');
         setCountDeleted(countDeleted + 1);
         setShowModal(false);
-        setErrors({ status: false });
+        setErrors({status: false});
       } else {
-        setErrors({ status: true, msg: 'Item sudah ada!' });
+        setErrors({status: true, msg: 'Item sudah ada!'});
       }
     }
   };
@@ -92,7 +93,7 @@ const Item = ({ navigation }) => {
   const handleCloseModal = () => {
     setShowModal(false);
     setItemName('');
-    setErrors({ status: false });
+    setErrors({status: false});
   };
 
   const handleSyncronizing = async () => {
@@ -108,7 +109,7 @@ const Item = ({ navigation }) => {
   };
 
   return (
-    <>
+    <SafeAreaView>
       <Modal isOpen={showModal} onClose={handleCloseModal}>
         <Modal.Content maxWidth="400px">
           <Modal.Header>Tambah Item</Modal.Header>
@@ -170,11 +171,15 @@ const Item = ({ navigation }) => {
         <FlatList
           showsVerticalScrollIndicator={false}
           data={dataItems}
-          renderItem={({ item }) => {
+          renderItem={({item}) => {
             return (
               <HStack bg="white" p={3} mt={1} justifyContent="space-between">
                 <Text>{item.name}</Text>
-                <Icon name="trash" onPress={() => handleDeleteItem(item.id)} color="#000000" />
+                <Icon
+                  name="trash"
+                  onPress={() => handleDeleteItem(item.id)}
+                  color="#000000"
+                />
               </HStack>
             );
           }}
@@ -186,7 +191,7 @@ const Item = ({ navigation }) => {
           refreshing={isRefresh}
         />
       )}
-    </>
+    </SafeAreaView>
   );
 };
 

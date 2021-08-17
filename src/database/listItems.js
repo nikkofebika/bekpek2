@@ -38,7 +38,7 @@ export const getAllListItems = userId => {
             }
           }
           console.log('res getAllListItems', results);
-          resolve({ success: true, data: results });
+          resolve({success: true, data: results});
         },
         error => {
           console.log('error db getItems', error.message);
@@ -53,7 +53,7 @@ export const getListItemByListId = listId => {
   return new Promise((resolve, reject) => {
     db.transaction(fx => {
       fx.executeSql(
-        'SELECT list_items.id, items.id as item_id, items.name, list_items.returned FROM list_items JOIN items ON items.id=list_items.item_id WHERE list_id = ?',
+        'SELECT list_items.id, items.id as item_id, items.name, list_items.returned FROM list_items JOIN items ON items.id=list_items.item_id WHERE list_id = ? ORDER BY items.name ASC',
         [listId],
         (fx, res) => {
           let len = res.rows.length;
@@ -71,7 +71,7 @@ export const getListItemByListId = listId => {
               });
             }
           }
-          resolve({ success: true, data: results, returned: total_returned });
+          resolve({success: true, data: results, returned: total_returned});
         },
         error => {
           console.log('error db getItems', error.message);
@@ -83,6 +83,7 @@ export const getListItemByListId = listId => {
 };
 
 export const insertListItems = data => {
+  console.log('insertListItems', data);
   return new Promise((resolve, reject) => {
     db.transaction(fx => {
       data.items.map(item => {
@@ -152,7 +153,7 @@ export const updateReturnListItems = (id, status) => {
         [status, id],
         (fx, res) => {
           console.log('res updateReturnListItems', res);
-          resolve({ success: true });
+          resolve({success: true});
         },
         error => {
           console.log('error db insertListItems', error.message);

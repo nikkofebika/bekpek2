@@ -1,22 +1,26 @@
-import React, { useEffect, useState, useLayoutEffect, useContext } from 'react';
+import React, {useEffect, useState, useLayoutEffect, useContext} from 'react';
 import {
+  Box,
   Checkbox,
+  Divider,
   FlatList,
+  Flex,
   FormControl,
   HStack,
   Input,
   Text,
+  View,
   VStack,
 } from 'native-base';
-import { getAllItems } from '../database/Items';
-import { TouchableOpacity } from 'react-native';
-import Icon from 'react-native-ionicons';
-import { getAllList, insertList } from '../database/Lists';
-import { insertListItems } from '../database/listItems';
-import { AuthContext } from '../context/auth/AuthContext';
+import {getAllItems} from '../database/Items';
+import {TouchableOpacity} from 'react-native';
+import {getAllList, insertList} from '../database/Lists';
+import {insertListItems} from '../database/listItems';
+import {AuthContext} from '../context/auth/AuthContext';
+import Icon from '../components/atoms/Icon';
 
-const Create = ({ navigation }) => {
-  const { authState } = useContext(AuthContext);
+const Create = ({navigation}) => {
+  const {authState} = useContext(AuthContext);
   const userData = JSON.parse(authState.userData);
   const userId = userData.id;
   const [listName, setListName] = useState('');
@@ -27,20 +31,16 @@ const Create = ({ navigation }) => {
     navigation.setOptions({
       headerRight: () => (
         <HStack>
-          <TouchableOpacity onPress={() => alert('search')}>
-            <Icon
-              ios="ios-search"
-              android="md-search"
-              style={{ marginRight: 15 }}
-            />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={submitForm}>
-            <Icon
-              ios="ios-checkmark-circle-outline"
-              android="md-checkmark-circle-outline"
-              style={{ marginRight: 15, color: 'green' }}
-            />
-          </TouchableOpacity>
+          <Icon
+            name="search"
+            onPress={() => alert('search')}
+            style={{marginRight: 15}}
+          />
+          <Icon
+            name="checkmark-circle-outline"
+            onPress={submitForm}
+            style={{marginRight: 15}}
+          />
         </HStack>
       ),
     });
@@ -61,53 +61,60 @@ const Create = ({ navigation }) => {
   };
 
   const submitForm = async () => {
-    const saveListName = await insertList({ userId, name: listName });
+    const saveListName = await insertList({userId, name: listName});
     if (saveListName.success) {
+      console.log('listName', listName);
       console.log('selectedItems', selectedItems);
-      await insertListItems({ userId, listId: saveListName.data.insertId, items: selectedItems });
-      await getAllList(userId);
+      console.log('saveListName.data.insertId', saveListName.data.insertId);
+      await insertListItems({
+        userId,
+        listId: saveListName.data.insertId,
+        items: selectedItems,
+      });
       // navigation.popToTop('Home', {updated: true});
       navigation.navigate({
         name: 'Home',
-        params: { updated: true },
+        params: {updated: true},
         merge: true,
       });
     }
   };
   return (
-    <VStack mx={3} my={2}>
+    <Box my={2} safeArea flex={1}>
       <FormControl isRequired>
         <Input
+          mx={3}
           p={2}
           placeholder="Nama List"
           value={listName}
           onChangeText={setListName}
         />
       </FormControl>
-      <Checkbox.Group
-        width="100%"
-        onChange={setSelectedItems}
-        value={selectedItems}>
+      <Checkbox.Group onChange={setSelectedItems} value={selectedItems}>
         <FlatList
           width="100%"
-          bg="primary.300"
+          showsVerticalScrollIndicator={false}
           data={dataItems}
-          renderItem={({ item }) => {
+          renderItem={({item}) => {
             return (
-              <Checkbox
-                value={item.id}
-                my={2}
-                accessible={true}
-                accessibilityLabel={item.name}>
-                <Text>
-                  {item.id} {item.name}
-                </Text>
-              </Checkbox>
+              <>
+                <Checkbox
+                  mx={2}
+                  my={2}
+                  colorScheme="info"
+                  alignItems="flex-start"
+                  value={item.id}
+                  accessible={true}
+                  accessibilityLabel={item.name}>
+                  <Text> {'  ' + item.name}</Text>
+                </Checkbox>
+                <Divider />
+              </>
             );
           }}
         />
       </Checkbox.Group>
-    </VStack>
+    </Box>
   );
 };
 

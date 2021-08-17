@@ -1,7 +1,8 @@
 import db from '../config/db';
-import { getDateNow } from '../utils/general';
+import {getDateNow} from '../utils/general';
 
 export const insertList = data => {
+  console.log('datana', data);
   return new Promise((resolve, reject) => {
     db.transaction(tx => {
       tx.executeSql(
@@ -9,8 +10,8 @@ export const insertList = data => {
         [data.userId, data.name],
         (sqlTx, res) => {
           console.log('res', res);
-          console.log(`${name} added successfully`);
-          resolve({ success: true, data: res });
+          console.log(`${data.name} added successfully`);
+          resolve({success: true, data: res});
         },
         error => {
           console.log('error db insert list', error.message);
@@ -29,7 +30,7 @@ export const updateList = data => {
         [data.name, dateNow, data.id],
         (sqlTx, res) => {
           console.log(`updateList updated successfully`);
-          resolve({ success: true, data: res });
+          resolve({success: true, data: res});
         },
         error => {
           console.log('error db insert list', error.message);
@@ -64,7 +65,7 @@ export const deleteList = id => {
         [id],
         (sqlTx, res) => {
           tx.executeSql('DELETE FROM list_items WHERE list_id=' + id);
-          resolve({ success: true });
+          resolve({success: true});
         },
         error => {
           console.log('error db delete list');
@@ -79,7 +80,7 @@ export const getAllList = userId => {
   return new Promise((resolve, reject) => {
     db.transaction(tx => {
       tx.executeSql(
-        `SELECT lists.id, lists.created, lists.updated, lists.name as list_user_idname, items.name as item_name FROM lists JOIN list_items li ON li.list_id=lists.id JOIN items ON items.id=li.item_id WHERE lists.user_id = ? ORDER BY lists.id DESC`,
+        `SELECT lists.id, lists.created, lists.updated, lists.name as list_name, items.name as item_name FROM lists JOIN list_items li ON li.list_id=lists.id JOIN items ON items.id=li.item_id WHERE lists.user_id = ? ORDER BY lists.id DESC, items.name ASC`,
         [userId],
         (sqlTx, res) => {
           let len = res.rows.length;

@@ -1,6 +1,7 @@
 export const initialAuthState = {
   userData: null,
   isLoading: true,
+  loginUserNotFound: false,
   // userToken: null,
   // userData: {
   //   id: null,
@@ -15,6 +16,7 @@ export const AuthReducers = (state = initialAuthState, action) => {
       return {
         ...state,
         userData: action.userData,
+        loginUserNotFound: action.loginUserNotFound,
         isLoading: false,
         // userToken: action.userToken,
       };
