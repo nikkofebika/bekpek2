@@ -1,50 +1,70 @@
-import React, {useEffect, useState, useLayoutEffect, useContext} from 'react';
+import React, { useEffect, useState, useLayoutEffect, useContext } from 'react';
 import {
   Box,
+  Center,
   Checkbox,
   Divider,
   FlatList,
-  Flex,
   FormControl,
   HStack,
   Input,
+  Spinner,
   Text,
-  View,
-  VStack,
 } from 'native-base';
-import {getAllItems} from '../database/Items';
-import {TouchableOpacity} from 'react-native';
-import {getAllList, insertList} from '../database/Lists';
-import {insertListItems} from '../database/listItems';
-import {AuthContext} from '../context/auth/AuthContext';
-import Icon from '../components/atoms/Icon';
+import { getAllItems } from '../database/Items';
+import { getAllList, insertList } from '../database/Lists';
+import { insertListItems } from '../database/listItems';
+import { AuthContext } from '../context/auth/AuthContext';
+import MyIcon from '../components/atoms/MyIcon';
+import { Dimensions, Image } from 'react-native';
 
-const Create = ({navigation}) => {
-  const {authState} = useContext(AuthContext);
+const SCREEN_WIDTH = Dimensions.get('window').width;
+
+const Create = ({ navigation }) => {
+  const { authState } = useContext(AuthContext);
   const userData = JSON.parse(authState.userData);
   const userId = userData.id;
   const [listName, setListName] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [showSearch, setShowSearch] = useState(false);
+  const [querySearch, setQuerySearch] = useState('');
+  const [filteredDataItems, setFilteredDataItems] = useState([]);
   const [dataItems, setDataItems] = useState([]);
   const [selectedItems, setSelectedItems] = useState([]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
+      headerTitle: () => showSearch ? (
+        <Box style={{ width: 200 }}>
+          <Input
+            placeholder="Cari item disini..."
+            bg="#fff"
+            p={2}
+            my={2}
+            value={querySearch}
+            onChangeText={val => handleSearch(val)}
+          />
+        </Box>
+      ) : <Text color="white" fontSize={20} fontWeight="bold">Buat List</Text>,
       headerRight: () => (
         <HStack>
-          <Icon
-            name="search"
-            onPress={() => alert('search')}
-            style={{marginRight: 15}}
+          <MyIcon
+            name={showSearch ? "close" : "search"}
+            onPress={() => {
+              handleSearch("")
+              setShowSearch(!showSearch)
+            }}
+            style={{ marginRight: 15 }}
           />
-          <Icon
+          <MyIcon
             name="checkmark-circle-outline"
             onPress={submitForm}
-            style={{marginRight: 15}}
+            style={{ marginRight: 15 }}
           />
         </HStack>
       ),
     });
-  }, [navigation, listName, selectedItems]);
+  }, [navigation, listName, selectedItems, showSearch, querySearch]);
 
   useEffect(() => {
     fetchItems();
@@ -53,19 +73,31 @@ const Create = ({navigation}) => {
   const fetchItems = async () => {
     const res = await getAllItems(userId);
     if (res.success) {
-      console.log('res items', res.data);
       setDataItems(res.data);
+      setFilteredDataItems(res.data);
+      setIsLoading(false)
     } else {
       console.log('error fetch items', res.msg);
     }
   };
 
+  const handleSearch = (query) => {
+    setQuerySearch(query);
+    if (query) {
+      const newData = dataItems.filter((item) => {
+        const itemData = item.name ? item.name.toUpperCase() : "".toUpperCase();
+        const queryData = query.toUpperCase();
+        return itemData.indexOf(queryData) > -1;
+      })
+      setFilteredDataItems(newData);
+    } else {
+      setFilteredDataItems(dataItems);
+    }
+  }
+
   const submitForm = async () => {
-    const saveListName = await insertList({userId, name: listName});
+    const saveListName = await insertList({ userId, name: listName });
     if (saveListName.success) {
-      console.log('listName', listName);
-      console.log('selectedItems', selectedItems);
-      console.log('saveListName.data.insertId', saveListName.data.insertId);
       await insertListItems({
         userId,
         listId: saveListName.data.insertId,
@@ -74,28 +106,35 @@ const Create = ({navigation}) => {
       // navigation.popToTop('Home', {updated: true});
       navigation.navigate({
         name: 'Home',
-        params: {updated: true},
+        params: { updated: true },
         merge: true,
       });
     }
   };
   return (
-    <Box my={2} safeArea flex={1}>
+    <Box safeArea flex={1} bg="white">
       <FormControl isRequired>
         <Input
+          mt={2}
           mx={3}
           p={2}
           placeholder="Nama List"
           value={listName}
-          onChangeText={setListName}
+          onChangeText={val => setListName(val)}
         />
       </FormControl>
-      <Checkbox.Group onChange={setSelectedItems} value={selectedItems}>
+      {isLoading ? <Center flex={1}><Spinner /></Center> : filteredDataItems.length === 0 ? (<Center justifyContent="center">
+        <Image style={{
+          width: SCREEN_WIDTH,
+          height: SCREEN_WIDTH,
+        }} source={require("../assets/images/no_data.jpg")} />
+        <Text fontWeight="bold" fontSize="2xl">Item tidak ditemukan.</Text>
+      </Center>) : (<Checkbox.Group onChange={setSelectedItems} value={selectedItems}>
         <FlatList
           width="100%"
           showsVerticalScrollIndicator={false}
-          data={dataItems}
-          renderItem={({item}) => {
+          data={filteredDataItems}
+          renderItem={({ item }) => {
             return (
               <>
                 <Checkbox
@@ -113,8 +152,9 @@ const Create = ({navigation}) => {
             );
           }}
         />
-      </Checkbox.Group>
-    </Box>
+      </Checkbox.Group>)
+      }
+    </Box >
   );
 };
 

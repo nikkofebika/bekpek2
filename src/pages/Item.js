@@ -1,38 +1,48 @@
-import React, {useEffect, useState, useRef, useContext} from 'react';
+import React, { useEffect, useState, useRef, useContext } from 'react';
 import {
   AlertDialog,
   Button,
   Center,
+  Divider,
   FlatList,
   HStack,
+  Icon,
   Input,
   Modal,
   Spinner,
   Text,
+  View,
 } from 'native-base';
+import { Image, Dimensions, Alert } from "react-native"
 import {
   deleteItem,
   getAllItems,
   insertItem,
   syncronizingItems,
 } from '../database/Items';
-import Icon from '../components/atoms/Icon';
-import {AuthContext} from '../context/auth/AuthContext';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import Ionicons from "react-native-ionicons"
+import MyIcon from '../components/atoms/MyIcon';
+import { AuthContext } from '../context/auth/AuthContext';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-const Item = ({navigation}) => {
+const SCREEN_WIDTH = Dimensions.get('window').width;
+
+const Item = ({ navigation }) => {
   const [countDeleted, setCountDeleted] = useState(0);
   const [itemName, setItemName] = useState('');
+  const [querySearch, setQuerySearch] = useState('');
+  const [filteredDataItems, setFilteredDataItems] = useState([]);
   const [dataItems, setDataItems] = useState([]);
+  const [isLoading, setisLoading] = useState(true);
   const [isRefresh, setIsRefresh] = useState(false);
   const [isSynchronizing, setIsSynchronizing] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [errors, setErrors] = useState({status: false, msg: ''});
+  const [errors, setErrors] = useState({ status: false, msg: '' });
   const [isOpenAlert, setIsOpenAlert] = useState(false);
   const onCloseAlert = () => setIsOpenAlert(false);
   const cancelRefAlert = useRef();
 
-  const {authState} = useContext(AuthContext);
+  const { authState } = useContext(AuthContext);
   const userData = JSON.parse(authState.userData);
   const userId = userData.id;
 
@@ -40,14 +50,14 @@ const Item = ({navigation}) => {
     navigation.setOptions({
       headerRight: () => (
         <HStack>
-          <Icon
+          <MyIcon
             name="sync"
-            style={{marginRight: 20, color: '#fff'}}
+            style={{ marginRight: 20, color: '#fff' }}
             onPress={() => setIsOpenAlert(!isOpenAlert)}
           />
-          <Icon
+          <MyIcon
             name="add"
-            style={{marginRight: 15, color: '#fff'}}
+            style={{ marginRight: 15, color: '#fff' }}
             onPress={() => setShowModal(true)}
           />
         </HStack>
@@ -62,30 +72,44 @@ const Item = ({navigation}) => {
   const fetchItems = async () => {
     const res = await getAllItems(userId);
     if (res.success) {
-      console.log('res items', res.data);
       setDataItems(res.data);
+      setFilteredDataItems(res.data);
+      setisLoading(false)
     } else {
       console.log('error fetch items', res.msg);
     }
   };
 
-  const handleDeleteItem = async id => {
-    await deleteItem(id);
-    setCountDeleted(countDeleted + 1);
+  const handleDeleteItem = (name, id) => {
+    Alert.alert(
+      "Hapus",
+      "Hapus " + name + " ?",
+      [
+        {
+          text: "Batal"
+        },
+        {
+          text: "OK", onPress: async () => {
+            await deleteItem(id);
+            setCountDeleted(countDeleted + 1);
+          }
+        }
+      ]
+    );
   };
 
   const handleInsertItem = async () => {
     if (itemName === '') {
-      setErrors({status: true, msg: 'Nama item harus diisi!'});
+      setErrors({ status: true, msg: 'Nama item harus diisi!' });
     } else {
-      let saveItem = await insertItem({userId, name: itemName});
+      let saveItem = await insertItem({ userId, name: itemName });
       if (saveItem.success) {
         setItemName('');
         setCountDeleted(countDeleted + 1);
         setShowModal(false);
-        setErrors({status: false});
+        setErrors({ status: false });
       } else {
-        setErrors({status: true, msg: 'Item sudah ada!'});
+        setErrors({ status: true, msg: 'Item sudah ada!' });
       }
     }
   };
@@ -93,7 +117,7 @@ const Item = ({navigation}) => {
   const handleCloseModal = () => {
     setShowModal(false);
     setItemName('');
-    setErrors({status: false});
+    setErrors({ status: false });
   };
 
   const handleSyncronizing = async () => {
@@ -108,8 +132,22 @@ const Item = ({navigation}) => {
     }, 2000);
   };
 
+  const handleSearch = (query) => {
+    setQuerySearch(query);
+    if (query) {
+      const newData = dataItems.filter((item) => {
+        const itemData = item.name ? item.name.toUpperCase() : "".toUpperCase();
+        const queryData = query.toUpperCase();
+        return itemData.indexOf(queryData) > -1;
+      })
+      setFilteredDataItems(newData);
+    } else {
+      setFilteredDataItems(dataItems);
+    }
+  }
+
   return (
-    <SafeAreaView>
+    <SafeAreaView style={{ backgroundColor: "white", flex: 1 }}>
       <Modal isOpen={showModal} onClose={handleCloseModal}>
         <Modal.Content maxWidth="400px">
           <Modal.Header>Tambah Item</Modal.Header>
@@ -165,32 +203,53 @@ const Item = ({navigation}) => {
           )}
         </AlertDialog.Content>
       </AlertDialog>
-      {dataItems.length === 0 ? (
-        <Text>Tidak ada item</Text>
-      ) : (
-        <FlatList
-          showsVerticalScrollIndicator={false}
-          data={dataItems}
-          renderItem={({item}) => {
-            return (
-              <HStack bg="white" p={3} mt={1} justifyContent="space-between">
-                <Text>{item.name}</Text>
-                <Icon
-                  name="trash"
-                  onPress={() => handleDeleteItem(item.id)}
-                  color="#000000"
-                />
-              </HStack>
-            );
-          }}
-          onRefresh={() => {
-            setIsRefresh(true);
-            fetchItems();
-            setIsRefresh(false);
-          }}
-          refreshing={isRefresh}
-        />
-      )}
+      <Input
+        placeholder="Cari item disini..."
+        bg="#fff"
+        p={2}
+        m={2}
+        value={querySearch}
+        onChangeText={val => handleSearch(val)}
+        InputLeftElement={<Icon size='sm' ml={2} color="gray.400" as={<Ionicons name="ios-search" />} />}
+        InputRightElement={querySearch && <Icon onPress={() => handleSearch("")} size='sm' as={<Ionicons name="ios-close" />} />}
+      />
+      <View>
+        {isLoading ? <Spinner /> : filteredDataItems.length === 0 ? (
+          <Center justifyContent="center">
+            <Image style={{
+              width: SCREEN_WIDTH,
+              height: SCREEN_WIDTH,
+            }} source={require("../assets/images/no_data.jpg")} />
+            <Text fontWeight="bold" fontSize="2xl">Item tidak ditemukan.</Text>
+          </Center>
+        ) : (
+          <FlatList
+            showsVerticalScrollIndicator={false}
+            data={filteredDataItems}
+            renderItem={({ item }) => {
+              return (
+                <>
+                  <HStack bg="white" p={3} mt={1} justifyContent="space-between">
+                    <Text>{item.name}</Text>
+                    <MyIcon
+                      name="trash"
+                      onPress={() => handleDeleteItem(item.name, item.id)}
+                      color="#000000"
+                    />
+                  </HStack>
+                  <Divider />
+                </>
+              );
+            }}
+            onRefresh={() => {
+              setIsRefresh(true);
+              fetchItems();
+              setIsRefresh(false);
+            }}
+            refreshing={isRefresh}
+          />
+        )}
+      </View>
     </SafeAreaView>
   );
 };

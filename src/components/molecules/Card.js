@@ -1,10 +1,10 @@
 import React from 'react';
-import {Alert, TouchableOpacity} from 'react-native';
-import {Text, Box, HStack, VStack} from 'native-base';
-import {useNavigation} from '@react-navigation/native';
-import Icon from '../atoms/Icon';
-import {formatDate} from '../../utils/general';
-const Card = ({data, handleDeleteList}) => {
+import { Alert, TouchableOpacity } from 'react-native';
+import { Text, Box, HStack, VStack } from 'native-base';
+import { useNavigation } from '@react-navigation/native';
+import MyIcon from '../atoms/MyIcon';
+import { formatDate } from '../../utils/general';
+const Card = ({ data, handleDeleteList }) => {
   const navigation = useNavigation();
   return (
     <Box my={2} mx={3} shadow={3}>
@@ -43,7 +43,7 @@ const Card = ({data, handleDeleteList}) => {
           )}
         </VStack>
         <HStack space={3}>
-          <Icon
+          <MyIcon
             color="#000000"
             name="create"
             onPress={() =>
@@ -53,15 +53,15 @@ const Card = ({data, handleDeleteList}) => {
               })
             }
           />
-          <Icon
+          <MyIcon
             color="#F00000"
             name="trash"
             onPress={() =>
-              Alert.alert('Hapus', 'Hapus ' + name, [
+              Alert.alert('Hapus', 'Hapus ' + data.list_name, [
                 {
                   text: 'Batal',
                 },
-                {text: 'OK', onPress: handleDeleteList},
+                { text: 'OK', onPress: handleDeleteList },
               ])
             }
           />

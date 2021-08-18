@@ -17,7 +17,7 @@ import {
   useToast,
 } from 'native-base';
 import { Keyboard } from 'react-native';
-import Icon from '../components/atoms/Icon';
+import MyIcon from '../components/atoms/MyIcon';
 import { insertUser } from '../database/Users';
 
 export default function Signup({ navigation }) {
@@ -91,7 +91,7 @@ export default function Signup({ navigation }) {
               onChangeText={value => setPassword(value)}
               value={password}
               InputRightElement={
-                <Icon onPress={() => setShowPassword(!showPassword)} name={showPassword ? "eye-off" : "eye"} style={{ marginRight: 10 }} />
+                <MyIcon onPress={() => setShowPassword(!showPassword)} name={showPassword ? "eye-off" : "eye"} style={{ marginRight: 10 }} />
               }
             />
           </FormControl>

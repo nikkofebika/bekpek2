@@ -1,17 +1,17 @@
 import db from '../config/db';
-import {getDateNow} from '../utils/general';
+import { getDateNow } from '../utils/general';
 
 export const insertList = data => {
-  console.log('datana', data);
+  let dateNow = getDateNow();
   return new Promise((resolve, reject) => {
     db.transaction(tx => {
       tx.executeSql(
-        `INSERT INTO lists (user_id, name) VALUES (?,?)`,
-        [data.userId, data.name],
+        `INSERT INTO lists (user_id, name, created) VALUES (?,?,?)`,
+        [data.userId, data.name, dateNow],
         (sqlTx, res) => {
-          console.log('res', res);
-          console.log(`${data.name} added successfully`);
-          resolve({success: true, data: res});
+          // console.log('res', res);
+          // console.log(`${data.name} added successfully`);
+          resolve({ success: true, data: res });
         },
         error => {
           console.log('error db insert list', error.message);
@@ -29,8 +29,8 @@ export const updateList = data => {
         `UPDATE lists SET name=?, updated=? WHERE id=?`,
         [data.name, dateNow, data.id],
         (sqlTx, res) => {
-          console.log(`updateList updated successfully`);
-          resolve({success: true, data: res});
+          // console.log(`updateList updated successfully`);
+          resolve({ success: true, data: res });
         },
         error => {
           console.log('error db insert list', error.message);
@@ -65,7 +65,7 @@ export const deleteList = id => {
         [id],
         (sqlTx, res) => {
           tx.executeSql('DELETE FROM list_items WHERE list_id=' + id);
-          resolve({success: true});
+          resolve({ success: true });
         },
         error => {
           console.log('error db delete list');
@@ -76,7 +76,6 @@ export const deleteList = id => {
   });
 };
 export const getAllList = userId => {
-  // console.log('tesssssss', userId);
   return new Promise((resolve, reject) => {
     db.transaction(tx => {
       tx.executeSql(
@@ -99,7 +98,7 @@ export const getAllList = userId => {
               results.push(item);
             }
             // console.log('test', test);
-            console.log('results getAllList', results);
+            // console.log('results getAllList', results);
 
             var o = {};
             var datas = results.reduce(function (r, el) {
@@ -141,8 +140,8 @@ export const getListById = id => {
         [],
         (sqlTx, res) => {
           let len = res.rows.length;
-          console.log('res edit', res);
-          console.log('len edit', len);
+          // console.log('res edit', res);
+          // console.log('len edit', len);
         },
         error => {
           console.log('error db getListById', error.message);
@@ -159,7 +158,7 @@ export const dropTableLists = () => {
         'DROP TABLE lists',
         [],
         (fx, res) => {
-          console.log('dropTableLists', res);
+          // console.log('dropTableLists', res);
           resolve(res);
         },
         error => {

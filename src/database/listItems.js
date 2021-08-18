@@ -37,8 +37,8 @@ export const getAllListItems = userId => {
               });
             }
           }
-          console.log('res getAllListItems', results);
-          resolve({success: true, data: results});
+          // console.log('res getAllListItems', results);
+          resolve({ success: true, data: results });
         },
         error => {
           console.log('error db getItems', error.message);
@@ -71,7 +71,7 @@ export const getListItemByListId = listId => {
               });
             }
           }
-          resolve({success: true, data: results, returned: total_returned});
+          resolve({ success: true, data: results, returned: total_returned });
         },
         error => {
           console.log('error db getItems', error.message);
@@ -83,7 +83,6 @@ export const getListItemByListId = listId => {
 };
 
 export const insertListItems = data => {
-  console.log('insertListItems', data);
   return new Promise((resolve, reject) => {
     db.transaction(fx => {
       data.items.map(item => {
@@ -91,8 +90,8 @@ export const insertListItems = data => {
           'INSERT INTO list_items (user_id, list_id, item_id) VALUES (?,?,?)',
           [data.userId, data.listId, item],
           (fx, res) => {
-            console.log('id item', item);
-            console.log('res insertListItems', res);
+            // console.log('id item', item);
+            // console.log('res insertListItems', res);
             resolve(res);
           },
           error => {
@@ -113,7 +112,7 @@ export const updateListItems = data => {
           'INSERT INTO list_items (user_id, list_id, item_id) VALUES (?,?,?)',
           [data.userId, data.listId, item],
           (fx, res) => {
-            console.log('res insertListItems', res);
+            // console.log('res insertListItems', res);
             resolve(res);
           },
           error => {
@@ -132,7 +131,7 @@ export const deleteListItemByItemId = id => {
         'DELETE FROM list_items WHERE item_id = ?',
         [id],
         (fx, res) => {
-          console.log('res deleteListItemByItemId', res);
+          // console.log('res deleteListItemByItemId', res);
           resolve(res);
         },
         error => {
@@ -145,15 +144,13 @@ export const deleteListItemByItemId = id => {
 };
 export const updateReturnListItems = (id, status) => {
   return new Promise((resolve, reject) => {
-    console.log('idid', id);
-    console.log('statusstatus', status);
     db.transaction(fx => {
       fx.executeSql(
         'UPDATE list_items SET returned = ? WHERE id = ?',
         [status, id],
         (fx, res) => {
-          console.log('res updateReturnListItems', res);
-          resolve({success: true});
+          // console.log('res updateReturnListItems', res);
+          resolve({ success: true });
         },
         error => {
           console.log('error db insertListItems', error.message);
@@ -170,7 +167,7 @@ export const dropTableListItems = () => {
         'DROP TABLE list_items',
         [],
         (fx, res) => {
-          console.log('dropTableListItems', res);
+          // console.log('dropTableListItems', res);
           resolve(res);
         },
         error => {

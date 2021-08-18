@@ -9,11 +9,11 @@ import {
     Text,
     VStack,
 } from 'native-base';
-import { TouchableOpacity, Switch } from 'react-native';
+import { Switch } from 'react-native';
 import Ionicon from 'react-native-ionicons';
 import { getListItemByListId, updateListItems, updateReturnListItems } from '../database/listItems';
 
-const Detail = ({ route, navigation }) => {
+const Detail = ({ route }) => {
     const { listId, list_name } = route.params;
     const [myItems, setMyItems] = useState([]);
     const [totalItems, setTotalItems] = useState(null);
@@ -21,7 +21,6 @@ const Detail = ({ route, navigation }) => {
 
     useEffect(async () => {
         fetchMyItems();
-        console.log('useeffect')
     }, []);
 
     const fetchMyItems = async () => {

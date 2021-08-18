@@ -1,47 +1,72 @@
-import React, {useEffect, useState, useLayoutEffect} from 'react';
+import React, { useEffect, useState, useLayoutEffect, useContext } from 'react';
 import {
+  Box,
+  Center,
   Checkbox,
+  Divider,
   FlatList,
   FormControl,
   HStack,
   Input,
-  VStack,
+  Spinner,
+  Text,
 } from 'native-base';
-import {getAllItems} from '../database/Items';
-import {TouchableOpacity} from 'react-native';
-import Icon from 'react-native-ionicons';
-import {updateList} from '../database/Lists';
-import {getListItemByListId, updateListItems} from '../database/listItems';
+import { getAllItems } from '../database/Items';
+import { updateList } from '../database/Lists';
+import { getListItemByListId, updateListItems } from '../database/listItems';
+import MyIcon from '../components/atoms/MyIcon';
+import { AuthContext } from '../context/auth/AuthContext';
+import { Image, Dimensions } from 'react-native';
 
-const Edit = ({route, navigation}) => {
-  const {listId, list_name} = route.params;
+const SCREEN_WIDTH = Dimensions.get('window').width;
 
-  const [listName, setListName] = useState('');
+const Edit = ({ route, navigation }) => {
+  const { listId, list_name } = route.params;
+  const { authState } = useContext(AuthContext);
+  const userData = JSON.parse(authState.userData);
+  const userId = userData.id;
+
+  const [listName, setListName] = useState(list_name);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showSearch, setShowSearch] = useState(false);
+  const [querySearch, setQuerySearch] = useState('');
+  const [filteredDataItems, setFilteredDataItems] = useState([]);
   const [dataItems, setDataItems] = useState([]);
   const [selectedItems, setSelectedItems] = useState([]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
+      headerTitle: () => showSearch ? (
+        <Box style={{ width: 200 }}>
+          <Input
+            placeholder="Cari item disini..."
+            bg="#fff"
+            p={2}
+            my={2}
+            value={querySearch}
+            onChangeText={val => handleSearch(val)}
+          />
+        </Box>
+      ) : <Text color="white" fontSize={20} fontWeight="bold">Buat List</Text>,
       headerRight: () => (
         <HStack>
-          <TouchableOpacity onPress={() => alert('search')}>
-            <Icon
-              ios="ios-search"
-              android="md-search"
-              style={{marginRight: 15}}
-            />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={submitForm}>
-            <Icon
-              ios="ios-checkmark-circle-outline"
-              android="md-checkmark-circle-outline"
-              style={{marginRight: 15, color: 'green'}}
-            />
-          </TouchableOpacity>
+          <MyIcon
+            name={showSearch ? "close" : "search"}
+            onPress={() => {
+              handleSearch("")
+              setShowSearch(!showSearch)
+            }}
+            style={{ marginRight: 15 }}
+          />
+          <MyIcon
+            name="checkmark-circle-outline"
+            onPress={submitForm}
+            style={{ marginRight: 15 }}
+          />
         </HStack>
       ),
     });
-  }, [navigation, listName, selectedItems]);
+  }, [navigation, listName, selectedItems, showSearch, querySearch]);
 
   useEffect(() => {
     fetchMyItems();
@@ -64,60 +89,86 @@ const Edit = ({route, navigation}) => {
   };
 
   const fetchItems = async () => {
-    const res = await getAllItems();
+    const res = await getAllItems(userId);
     if (res.success) {
       setDataItems(res.data);
+      setFilteredDataItems(res.data);
+      setIsLoading(false)
     } else {
       console.log('error fetch items', res.msg);
     }
   };
 
+  const handleSearch = (query) => {
+    setQuerySearch(query);
+    if (query) {
+      const newData = dataItems.filter((item) => {
+        const itemData = item.name ? item.name.toUpperCase() : "".toUpperCase();
+        const queryData = query.toUpperCase();
+        return itemData.indexOf(queryData) > -1;
+      })
+      setFilteredDataItems(newData);
+    } else {
+      setFilteredDataItems(dataItems);
+    }
+  }
+
   const submitForm = async () => {
-    console.log('listName', listName);
-    console.log('selectedItems', selectedItems);
-    const saveListName = await updateList({id: listId, name: listName});
+    const saveListName = await updateList({ id: listId, name: listName });
     if (saveListName.success) {
-      await updateListItems(listId, selectedItems);
+      await updateListItems({ userId, listId, items: selectedItems });
       //   navigation.popToTop();
       navigation.navigate({
         name: 'Home',
-        params: {updated: true},
+        params: { updated: true },
         merge: true,
       });
     }
   };
   return (
-    <VStack mx={3} my={2}>
+    <Box safeArea flex={1} bg="white">
       <FormControl isRequired>
         <Input
+          mt={2}
+          mx={3}
           p={2}
           placeholder="Nama List"
           value={listName}
-          onChangeText={setListName}
+          onChangeText={val => setListName(val)}
         />
       </FormControl>
-      <Checkbox.Group
-        width="100%"
-        onChange={setSelectedItems}
-        value={selectedItems}>
+      {isLoading ? <Center flex={1}><Spinner /></Center> : filteredDataItems.length === 0 ? (<Center justifyContent="center">
+        <Image style={{
+          width: SCREEN_WIDTH,
+          height: SCREEN_WIDTH,
+        }} source={require("../assets/images/no_data.jpg")} />
+        <Text fontWeight="bold" fontSize="2xl">Item tidak ditemukan.</Text>
+      </Center>) : (<Checkbox.Group onChange={setSelectedItems} value={selectedItems}>
         <FlatList
           width="100%"
-          bg="primary.300"
-          data={dataItems}
-          renderItem={({item}) => {
+          showsVerticalScrollIndicator={false}
+          data={filteredDataItems}
+          renderItem={({ item }) => {
             return (
-              <Checkbox
-                value={item.id}
-                my={2}
-                accessible={true}
-                accessibilityLabel={item.name}>
-                {item.name}
-              </Checkbox>
+              <>
+                <Checkbox
+                  mx={2}
+                  my={2}
+                  colorScheme="info"
+                  alignItems="flex-start"
+                  value={item.id}
+                  accessible={true}
+                  accessibilityLabel={item.name}>
+                  {item.name}
+                </Checkbox>
+                <Divider />
+              </>
             );
           }}
         />
-      </Checkbox.Group>
-    </VStack>
+      </Checkbox.Group>)
+      }
+    </Box>
   );
 };
 
